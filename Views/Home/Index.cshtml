@@ -1,0 +1,68 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<div style="margin: auto; width: 90%">
+
+
+    已点：<div id="today"></div>
+    饭店： <select id="shop">
+        <option id="qingxuanze">请选择</option>
+        <option id="xiangting">湘婷</option>
+        <option id="dongbei">东北土菜馆</option>
+    </select>
+    人数:<input type="number"style="width: 40px" id="counts" value="2"/>
+    <button onclick="AvgPrice()">合计</button>
+    <label id="tongji"></label>
+    <br/>
+    <br/>
+    <br/>
+    菜单：
+    <div id="caipu"></div>
+    <input type="submit" id="tijiao" value="提交" />
+</div>
+
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script type="text/javascript">
+
+    $("#shop").change(function() {
+        loadPage();
+    });
+
+    function loadPage() {
+        var strVar = "";
+        var strTody = "";
+        $.post("/Home/IndexJsonResult", { shopName: $('#shop option:selected').attr("id") }, function (data) {
+            var i = 0;
+            $.each(data.Shops, function (index, value) {
+                i++;
+                strVar += "<label style=\"width:150px\">" + value.Name + ":" + value.Price + "<\/label>\n";
+                strVar += "        <input type=\"radio\" id=\"" + value.Name + "\" value=\"" + value.Price + "\" cainame=\"" + value.Name + "\" name=\"cai\"/>\n&nbsp;&nbsp;&nbsp;";
+                if (i % 7 === 0) {
+                    strVar += "<br\/>";
+                }
+            });
+            $.each(data.Today, function (index, value) {
+                strTody += "<label>" + value.UserName + ":" + value.Name + "(" + value.Price + ")<\/label>\n<br\/>";
+            });
+            $("#caipu").html(strVar);
+            $("#today").html(strTody);
+        });
+    }
+
+    function AvgPrice() {
+        $.post("/Home/IndexGetAvgPrice", { counts :$("#counts").val().trim()}, function (data) {
+            $("#tongji").text("均价" + data.AvgPrice + ";总价:" + data.TotalPrice);
+        });
+        
+    }
+    $("#tijiao").click(function () {
+        $.post("/Home/IndexAddTodayJsonResult", { userName: "zhushubao", name: $('input:radio:checked').attr("cainame"), price: $('input:radio:checked').val()}, function (data) {
+            if (data === "true"||data ===true) {
+                alert("已点餐");
+                loadPage();
+            } else {
+                alert("请重新点");
+            }
+        });
+    });
+</script>
